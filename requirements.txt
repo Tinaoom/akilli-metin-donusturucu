@@ -1,0 +1,19 @@
+# Flask web framework
+Flask==3.0.3
+
+# Hugging Face API erişimi için
+requests==2.32.3
+python-dotenv==1.0.1
+
+# JSON veri işlemleri
+simplejson==3.19.2
+
+# (Opsiyonel) Debug / geliştirme kolaylığı
+gunicorn==23.0.0
+
+# (Eğer ileride OpenAI API ile test yapmak istersen)
+openai==1.54.0
+
+nltk==3.8.1
+scikit-learn==1.5.0
+numpy==1.26.4

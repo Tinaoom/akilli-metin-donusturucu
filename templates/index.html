@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İçerik Dönüştürücü Bot</title>
+    <!-- Tailwind CSS'i yükle (Görsel iyileştirme için) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+            color: #1f2937;
+        }
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .form-box, .output-box {
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid #e5e7eb;
+        }
+        textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            margin-top: 6px;
+            margin-bottom: 16px;
+            resize: vertical;
+            transition: border-color 0.2s;
+        }
+        textarea:focus, select:focus {
+            border-color: #3b82f6;
+            outline: none;
+        }
+        .result {
+            min-height: 100px;
+            padding: 12px;
+            background-color: #f3f4f6;
+            border-radius: 8px;
+            white-space: pre-wrap;
+        }
+        .error {
+            color: #ef4444;
+            font-weight: 600;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background-color: #10b981;
+            color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.5s, transform 0.5s;
+            transform: translateY(-20px);
+        }
+        .notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        /* Gizleme sınıfı */
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-4xl font-bold text-center mb-2">🧠 Akıllı Metin Dönüştürücü</h1>
+        <p class="text-center text-gray-500 mb-8">Mesajınızı yazın, hedef ton ve biçimi seçin — bot sizin yerinize yeniden yazsın</p>
+
+        <div class="form-box">
+            <label class="block text-sm font-medium text-gray-700 mb-2" for="original-text">✍️ Orijinal Metin:</label>
+            <textarea 
+                id="original-text" 
+                rows="5" 
+                placeholder="Dönüştürmek istediğiniz metni buraya yazın..."
+                onkeyup="debounceCheckAndClassify()"
+            ></textarea>
+            
+            <!-- Argo Uyarı Kutusu -->
+            <div id="argo-warning" class="text-sm p-2 rounded-lg bg-red-100 text-red-700 hidden mb-4 font-semibold">
+                ⚠️ **İçerik Uyarısı:** Girdiğiniz metin kaba veya uygunsuz kelimeler içeriyor. Dönüşüm sırasında AI etik kuralları tarafından reddedilebilir.
+            </div>
+
+            <div id="classification-status" class="text-sm font-medium text-gray-600 mb-4">
+                🔍 **Otomatik Ton Tespiti:** Metninizi yazın, bot tonu otomatik algılasın...
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700" for="tone-select">🎯 Hedef Ton / Kullanım Alanı:</label>
+                    <select id="tone-select" class="mt-1">
+                        <!-- YENİ ULTRA SAMİMİ TON EKLENDİ -->
+                        <option value="kanka">🗣️ Kanka Dili / En Samimi (Argo İzinli)</option>
+                        <option value="resmi">📄 Resmî Kurum / Dilekçe Dili</option>
+                        <option value="is">💼 İş / İnsan Kaynakları (Profesyonel)</option>
+                        <option value="samimi">💬 Arkadaşça / Günlük Mesaj</option>
+                        <option value="akademik">🎓 Akademik / Bilimsel Üslup</option>
+                        <option value="etik">⚖️ Etik / Saygılı ve Nötr Dil</option>
+                        <option value="ozur">🙏 Özür Dileyici / Kibar Üslup</option>
+                        <option value="destek">🛠️ Destek Talebi / Yardım İsteği</option>
+                        <option value="tanitim">📢 Tanıtım / Reklam Mesajı</option>
+                        <option value="mail">✉️ E-Posta Yazışması (Yarı Resmî)</option>
+                        <option value="rapor">📊 Rapor / İş Sunumu Üslubu</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700" for="font-select">🔠 Yazı Tipi (Yalnızca Biçimsel Not):</label>
+                    <select id="font-select" class="mt-1">
+                        <option value="Arial, sans-serif">Arial (Dengeli ve Kurumsal)</option>
+                        <option value="'Times New Roman', serif">Times New Roman (Klasik ve Ciddi)</option>
+                        <option value="Verdana, sans-serif">Verdana (Okunaklı ve Modern)</option>
+                        <option value="Calibri, sans-serif">Calibri (Profesyonel ve Hafif)</option>
+                        <option value="'Courier New', monospace">Courier New (Teknik / Kod Tarzı)</option>
+                    </select>
+                </div>
+            </div>
+
+            <button 
+                onclick="rewriteText()" 
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl mt-4 transition duration-300 transform hover:scale-[1.01] shadow-lg"
+            >
+                ✨ Metni Dönüştür ve Biçimlendir
+            </button>
+        </div>
+
+        <div class="output-box">
+            <div id="loading" class="hidden text-center p-4 text-blue-600 font-semibold">
+                🔄 Mesajınız LLM tarafından dönüştürülüyor, lütfen bekleyin...
+            </div>
+            
+            <!-- Ton Çakışması Uyarısı Alanı -->
+            <div id="conflict-warning" class="hidden p-3 rounded-lg bg-yellow-100 text-yellow-800 mb-4 text-sm">
+                <!-- Uyarı mesajı buraya gelecek -->
+            </div>
+
+            <h3 class="text-xl font-semibold mb-3">📝 Dönüştürülmüş Mesaj:</h3>
+            <div id="result-text" class="result text-gray-700">
+                Dönüştürülen metin burada, seçtiğiniz yazı tipinde görünecektir.
+            </div>
+            
+            <!-- NLP Metrikleri Alanı -->
+            <div id="metrics-output" class="mt-6 border-t pt-4 hidden">
+                <h4 class="text-lg font-semibold mb-2 text-gray-700">📊 NLP Metrik Analizi:</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div class="p-3 bg-indigo-50 rounded-lg">
+                        <span class="font-bold text-indigo-700">Anlam Korunma (Kos. Benzerliği):</span>
+                        <p id="similarity-score" class="text-lg mt-1 font-mono">--</p>
+                    </div>
+                    <div class="p-3 bg-green-50 rounded-lg">
+                        <span class="font-bold text-green-700">Okunabilirlik (Orijinal):</span>
+                        <p id="readability-original" class="text-lg mt-1 font-mono">--</p>
+                    </div>
+                    <div class="p-3 bg-red-50 rounded-lg">
+                        <span class="font-bold text-red-700">Okunabilirlik (Dönüştürülmüş):</span>
+                        <p id="readability-rewritten" class="text-lg mt-1 font-mono">--</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Özel Uyarı Kutusu -->
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // ALERT YERİNE KULLANILAN ÖZEL BİLDİRİM FONKSİYONU
+        function showNotification(message, isError = false) {
+            const notificationDiv = document.getElementById('notification');
+            notificationDiv.textContent = message;
+            notificationDiv.style.backgroundColor = isError ? '#ef4444' : '#10b981';
+            
+            notificationDiv.classList.add('show');
+            setTimeout(() => {
+                notificationDiv.classList.remove('show');
+            }, 3000);
+        }
+
+        // DEBOUNCE (Gecikmeli Çağrı) İÇİN GEREKLİ DEĞİŞKEN
+        let classificationTimeout = null;
+        
+        // Türkçe Argo Kelimelerin Basit Listesi (Client-side kontrol için)
+        const ARGO_WORDS = [
+            'salak', 'aptal', 'gerizekalı', 'lan', 'ulan', 'yavşak', 'sik', 'siktir',
+            'amk', 'orosbu', 'piç', 'hırsız', 'terörist', 'küfür', 'saçma'
+            // Bu liste, projenin etik sınırlarına göre genişletilebilir.
+        ];
+
+        // Argo Kelime Kontrolü
+        function checkForArgo(text) {
+            const lowerText = text.toLowerCase();
+            const argoWarningDiv = document.getElementById('argo-warning');
+            let argoDetected = false;
+
+            for (const word of ARGO_WORDS) {
+                // Kelime sınırları içinde kontrol et
+                const regex = new RegExp(`\\b${word}\\b`, 'g');
+                if (regex.test(lowerText)) {
+                    argoDetected = true;
+                    break;
+                }
+            }
+
+            if (argoDetected) {
+                argoWarningDiv.classList.remove('hidden');
+            } else {
+                argoWarningDiv.classList.add('hidden');
+            }
+        }
+
+        // OTOMATİK Sınıflandırma Fonksiyonu
+        function classifyText() {
+            const originalText = document.getElementById('original-text').value.trim();
+            const statusDiv = document.getElementById('classification-status');
+
+            if (originalText.length < 15) {
+                statusDiv.innerHTML = '🔍 **Otomatik Ton Tespiti:** Metin algılanacak kadar uzun değil.';
+                return;
+            }
+
+            statusDiv.innerHTML = '🔍 **Ton Tespiti:** Analiz ediliyor...';
+
+            // DİKKAT: Argo/Kanka tonu, sınıflandırma modeline dahil edilmediği için, 
+            // sınıflandırma sırasında bu ton otomatik olarak seçilmeyecektir.
+            // Sınıflandırma, sadece orijinal 10 tonu kullanır.
+
+            fetch('/classify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: originalText })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const scorePercentage = (data.score * 100).toFixed(1);
+                    // Sunucudan gelen 'label' değişkenini kullandık
+                    statusDiv.innerHTML = `✅ **Algılanan Ton:** <span class="text-green-600 font-bold">${data.label.toUpperCase()}</span> (${scorePercentage}% güven)`;
+                    
+                    // Algılanan tonu otomatik olarak seçili hale getir (Sadece orijinal 10 ton için)
+                    const select = document.getElementById('tone-select');
+                    const options = Array.from(select.options);
+                    // Kanka tonu haricindeki eşleşmeyi bul
+                    const matchingOption = options.find(opt => opt.value === data.label && opt.value !== 'kanka');
+
+                    if (matchingOption) {
+                        // Eğer metin zaten samimiye yakınsa, samimi tonu seçsin
+                        if (data.label === 'samimi' || data.label === 'ozur' || data.label === 'destek') {
+                            select.value = 'samimi';
+                        } else {
+                            select.value = data.label;
+                        }
+                    }
+                } else {
+                    statusDiv.innerHTML = `⚠️ **Ton Tespiti Hatası:** ${data.error}`;
+                }
+            })
+            .catch(err => {
+                console.error("Sınıflandırma sunucu hatası:", err);
+                statusDiv.innerHTML = '❌ **Bağlantı Hatası:** Sınıflandırma servisine ulaşılamadı.';
+            });
+        }
+        
+        // Gecikmeli sınıflandırmayı ve Argo kontrolünü başlatan fonksiyon
+        function debounceCheckAndClassify() {
+            const originalText = document.getElementById('original-text').value.trim();
+            
+            // Argo kontrolünü hemen yap
+            checkForArgo(originalText);
+
+            // Sınıflandırmayı gecikmeli başlat
+            clearTimeout(classificationTimeout);
+            classificationTimeout = setTimeout(classifyText, 800); // 800ms sonra sınıflandır
+        }
+
+
+        // ANA Yeniden Yazma Fonksiyonu
+        function rewriteText() {
+            const originalText = document.getElementById('original-text').value.trim();
+            const tone = document.getElementById('tone-select').value;
+            const font = document.getElementById('font-select').value;
+            const resultDiv = document.getElementById('result-text');
+            const loadingDiv = document.getElementById('loading');
+            const metricsDiv = document.getElementById('metrics-output');
+            const conflictWarningDiv = document.getElementById('conflict-warning');
+
+            // Hata ve Uyarıları Temizle
+            conflictWarningDiv.classList.add('hidden');
+            conflictWarningDiv.innerHTML = '';
+            metricsDiv.classList.add('hidden');
+
+
+            if (!originalText) {
+                showNotification("Lütfen dönüştürmek istediğiniz bir metin girin.", true);
+                return;
+            }
+
+            // Eğer hedef ton 'kanka' ise ve metinde argo tespit edildiyse, özel bir uyarı gösterilebilir
+            const argoWarningIsVisible = !document.getElementById('argo-warning').classList.contains('hidden');
+            if (tone === 'kanka' && argoWarningIsVisible) {
+                conflictWarningDiv.innerHTML = "💡 **Ek Bilgi:** 'Kanka Dili'ni seçtiğiniz için, girdiğiniz argo kelimeler dönüştürülen metinde **daha doğal bir şekilde** korunmaya çalışılacaktır. Dönüşüm başarılı olabilir.";
+                conflictWarningDiv.classList.remove('hidden');
+            }
+
+
+            loadingDiv.classList.remove('hidden');
+            resultDiv.innerHTML = 'Dönüştürme işlemi sürüyor...';
+
+            fetch('/rewrite', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: originalText, tone: tone, font: font })
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingDiv.classList.add('hidden');
+                
+                // Ton Çakışması Uyarısı (Genel)
+                if (data.warning) {
+                    // Kanka tonu seçildiğinde, çakışma uyarısını ezme
+                    if (tone !== 'kanka') {
+                        conflictWarningDiv.innerHTML = data.warning;
+                        conflictWarningDiv.classList.remove('hidden');
+                    }
+                }
+
+                if (data.success) {
+                    const rewritten = data.rewritten.replace(/\n/g, '<br>');
+                    
+                    // Metin sonuç kutusunun fontunu seçime göre ayarla
+                    resultDiv.innerHTML = `<p style="font-family:${font}; line-height: 1.6;">${rewritten}</p>`;
+                    showNotification("Metin başarıyla dönüştürüldü!");
+
+                    // Metrikleri Göster
+                    document.getElementById('similarity-score').textContent = data.metrics.similarity.toFixed(4);
+                    document.getElementById('readability-original').textContent = data.metrics.readability_original;
+                    document.getElementById('readability-rewritten').textContent = data.metrics.readability_rewritten;
+                    metricsDiv.classList.remove('hidden');
+
+                } else {
+                    // API/Güvenlik Hatası
+                    resultDiv.innerHTML = `<p class="error">Hata: ${data.error}</p>`;
+                    showNotification(`Dönüştürme başarısız oldu: ${data.error.substring(0, 50)}...`, true);
+                }
+            })
+            .catch(err => {
+                loadingDiv.classList.add('hidden');
+                resultDiv.innerHTML = `<p class="error">Sunucuya bağlanılamadı. Ağınızı veya Flask uygulamasını kontrol edin.</p>`;
+                showNotification("Kritik sunucu hatası!", true);
+            });
+        }
+    </script>
+</body>
+</html>

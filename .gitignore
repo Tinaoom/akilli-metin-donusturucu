@@ -1,0 +1,13 @@
+# Sanal ortam
+venv/
+.env
+__pycache__/
+*.pyc
+
+# IDE ayarları
+.vscode/
+.idea/
+
+# Sistem dosyaları
+.DS_Store
+Thumbs.db
