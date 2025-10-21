@@ -19,6 +19,7 @@ Kullanıcı tarafından girilen metni otomatik olarak diline göre algılar, bel
 
 ### 1️⃣ Sanal ortam oluşturun
 ```bash
+cd akilli-metin-donusturucu-main
 python -m venv venv
 venv\Scripts\activate   # Windows
 source venv/bin/activate  # macOS/Linux
