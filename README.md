@@ -28,7 +28,8 @@ source venv/bin/activate  # macOS/Linux
 pip install -r requirements.txt
 
 #3️⃣ Ortam değişkenini tanımlayın
-GEMINI_API_KEY=your_google_gemini_api_key
+Dizin içinde .env dosyası açın ve https://aistudio.google.com/api-keys aldığınız api keyi giriniz
+GEMINI_API_KEY=your_google_gemini_api_key #
 
 #4️⃣ Uygulamayı çalıştırın
 python app.py
