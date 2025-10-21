@@ -1,19 +1,22 @@
 # ✍️ Akıllı Metin Dönüştürücü (LLM Multilingual Text Styler)
 
 Bu proje, **LLM (Large Language Model)** tabanlı, çok dilli bir içerik dönüştürücü asistandır.  
-Kullanıcı tarafından girilen metni otomatik olarak diline göre algılar, belirlenen tona (ör. **resmî**, **samimi**, **akademik**) uygun biçimde yeniden yazar ve **okunabilirlik / anlam koruma metriklerini** hesaplar.
+Kullanıcı tarafından girilen metni **otomatik olarak diline göre algılar**, belirlenen **tona (ör. resmî, samimi, akademik)** uygun biçimde yeniden yazar  
+ve **okunabilirlik / anlam koruma metriklerini** hesaplar.
 
 ---
 
 ## 🚀 Özellikler
 
-✅ **Otomatik dil algılama:** Türkçe 🇹🇷, İngilizce 🇬🇧, Almanca 🇩🇪, İspanyolca 🇪🇸  
-✅ **Ton dönüştürme:** Resmî, samimi, akademik, özür, tanıtım, iş yazışması vb.  
-✅ **Font seçimi ve biçim önerisi**  
-✅ **Anlam korunumu (Cosine Similarity)**  
-✅ **Okunabilirlik analizi (Flesch Reading Ease)**  
-✅ **Firebase ile geçmiş kaydı (Firestore Realtime)**  
-✅ **Modern, responsive arayüz (Tailwind CSS)**  
+✅ Otomatik dil desteği: **Türkçe 🇹🇷**, **İngilizce 🇬🇧**, **Almanca 🇩🇪**, **İspanyolca 🇪🇸**  
+✅ Ton dönüştürme: Resmî, samimi, akademik, özür, tanıtım, iş yazışması vb.  
+✅ Font seçimi ve biçim önerisi  
+✅ Anlam korunumu (TF-IDF + Cosine Similarity)  
+✅ Okunabilirlik analizi (Flesch Reading Ease)  
+✅ Modern, responsive arayüz (Tailwind CSS)  
+✅ Geçmiş kayıt desteği (Firebase Firestore ile entegre edilebilir)
+
+> 📌 Not: Şu anki sürümde yalnızca **yerel analiz** yapılır. Firebase entegrasyonu isteğe bağlıdır.
 
 ## ⚙️ Kurulum
 
@@ -28,22 +31,25 @@ source venv/bin/activate  # macOS/Linux
 pip install -r requirements.txt
 
 #3️⃣ Ortam değişkenini tanımlayın
-Dizin içinde .env dosyası açın ve https://aistudio.google.com/api-keys aldığınız api keyi giriniz
-GEMINI_API_KEY=your_google_gemini_api_key #
+Ana dizinde bir .env dosyası oluşturun ve Google AI Studio üzerinden aldığınız API anahtarını girin:
+GEMINI_API_KEY=your_google_gemini_api_key 
 
 #4️⃣ Uygulamayı çalıştırın
 python app.py
-
-
 
 | Katman          | Teknoloji                                                |
 | --------------- | -------------------------------------------------------- |
 | **Backend**     | Flask (Python)                                           |
 | **LLM API**     | Google Gemini 2.5                                        |
-| **Frontend**    | HTML5, TailwindCSS, Firebase Firestore                   |
-| **NLP Analizi** | `textstat`, `nltk`, `scikit-learn`, `langdetect`         |
-| **Veritabanı**  | Firebase Firestore                                       |
+| **Frontend**    | HTML5, TailwindCSS                                       |
+| **NLP Analizi** | `textstat`, `nltk`, `scikit-learn`                       |
+| **Veritabanı**  | (Opsiyonel) Firebase Firestore                           |
 | **Metrikler**   | Okunabilirlik (Flesch), Anlam benzerliği (TF-IDF Cosine) |
+
+🪪 Lisans
+Bu proje MIT Lisansı ile lisanslanmıştır.
+İstediğiniz gibi kullanabilir, geliştirebilir ve paylaşabilirsiniz.
+
 
 
 
